@@ -7,6 +7,7 @@
  */
 package io.zeebe.engine.state.instance;
 
+import io.zeebe.engine.Loggers;
 import io.zeebe.engine.metrics.WorkflowEngineMetrics;
 import io.zeebe.engine.processor.ReadonlyProcessingContext;
 import io.zeebe.engine.processor.StreamProcessorLifecycleAware;
@@ -37,7 +38,7 @@ public final class WorkflowEngineState implements StreamProcessorLifecycleAware 
   @Override
   public void onRecovered(ReadonlyProcessingContext context) {
     final UpdateVariableStreamWriter updateVariableStreamWriter =
-        new UpdateVariableStreamWriter(context.getLogStreamWriter());
+        new UpdateVariableStreamWriter(context.getLogStreamWriter(), Loggers.VARIABLE_LOGGER);
 
     elementInstanceState.getVariablesState().setListener(updateVariableStreamWriter);
   }
