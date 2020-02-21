@@ -137,6 +137,7 @@ public class ElasticsearchExporter implements Exporter {
       }
       if (index.variable) {
         createValueIndexTemplate(ValueType.VARIABLE);
+        updateValueIndexMapping(ValueType.VARIABLE);
       }
       if (index.variableDocument) {
         createValueIndexTemplate(ValueType.VARIABLE_DOCUMENT);
@@ -166,6 +167,14 @@ public class ElasticsearchExporter implements Exporter {
   private void createValueIndexTemplate(final ValueType valueType) {
     if (!client.putIndexTemplate(valueType)) {
       log.warn("Put index template for value type {} was not acknowledged", valueType);
+    }
+  }
+
+  private void updateValueIndexMapping(final ValueType valueType) {
+    if (client.updateIndexMapping(valueType)) {
+      log.info("Update index template for value type {} was acknowledged", valueType);
+    } else {
+      log.warn("Update index template for value type {} was not acknowledged", valueType);
     }
   }
 

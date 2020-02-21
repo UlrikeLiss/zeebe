@@ -313,6 +313,21 @@ public class ElasticsearchExporterTest {
     verify(esClient, times(1)).flush();
   }
 
+  @Test
+  public void shouldUpdateIndexMapping() {
+    // given
+    config.index.prefix = "foo-bar";
+    config.index.createTemplate = true;
+    config.index.variable = true;
+
+    // when
+    createAndOpenExporter();
+    testHarness.export();
+
+    // then
+    verify(esClient).updateIndexMapping(ValueType.VARIABLE);
+  }
+
   private ElasticsearchExporter createExporter() {
     return createExporter(esClient);
   }
@@ -347,6 +362,7 @@ public class ElasticsearchExporterTest {
     when(client.flush()).thenReturn(true);
     when(client.putIndexTemplate(any(ValueType.class))).thenReturn(true);
     when(client.putIndexTemplate(anyString(), anyString(), anyString())).thenReturn(true);
+    when(client.updateIndexMapping(any(ValueType.class))).thenReturn(true);
     return client;
   }
 

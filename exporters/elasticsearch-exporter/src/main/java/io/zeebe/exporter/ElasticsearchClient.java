@@ -26,6 +26,7 @@ import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.apache.http.impl.nio.reactor.IOReactorConfig;
+import org.elasticsearch.action.admin.indices.alias.get.GetAliasesRequest;
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateRequest;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
@@ -35,6 +36,7 @@ import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.client.indices.PutMappingRequest;
 import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.slf4j.Logger;
@@ -42,6 +44,7 @@ import org.slf4j.Logger;
 public class ElasticsearchClient {
 
   public static final String INDEX_TEMPLATE_FILENAME_PATTERN = "/zeebe-record-%s-template.json";
+  public static final String INDEX_PATCH_FILENAME_PATTERN = "/zeebe-record-%s-patch.json";
   public static final String INDEX_DELIMITER = "_";
   protected final RestHighLevelClient client;
   private final ElasticsearchExporterConfiguration configuration;
@@ -128,7 +131,6 @@ public class ElasticsearchClient {
     final String filename = indexTemplateForValueType(valueType);
     return putIndexTemplate(templateName, filename, INDEX_DELIMITER);
   }
-
   /** @return true if request was acknowledged */
   public boolean putIndexTemplate(
       final String templateName, final String filename, final String indexDelimiter) {
@@ -167,6 +169,54 @@ public class ElasticsearchClient {
           .isAcknowledged();
     } catch (final IOException e) {
       throw new ElasticsearchExporterException("Failed to put index template", e);
+    }
+  }
+
+  /** @return true if request was acknowledged */
+  public boolean updateIndexMapping(final ValueType valueType) {
+    final String aliasName = indexPrefixForValueType(valueType);
+
+    if (!indexExists(aliasName)) {
+      return true;
+    }
+
+    final String filename = indexMappingPatchForValueType(valueType);
+    return updateIndexMapping(aliasName, filename);
+  }
+
+  /** @return true if request was acknowledged */
+  private boolean updateIndexMapping(final String aliasName, final String filename) {
+    final Map<String, Object> template;
+    try (final InputStream inputStream =
+        ElasticsearchExporter.class.getResourceAsStream(filename)) {
+      if (inputStream != null) {
+        template = XContentHelper.convertToMap(XContentType.JSON.xContent(), inputStream, true);
+      } else {
+        throw new ElasticsearchExporterException(
+            "Failed to find index mapping in classpath " + filename);
+      }
+    } catch (final IOException e) {
+      throw new ElasticsearchExporterException(
+          "Failed to load index mapping from classpath " + filename, e);
+    }
+
+    final PutMappingRequest putMappingRequest = new PutMappingRequest(aliasName).source(template);
+    try {
+      return client
+          .indices()
+          .putMapping(putMappingRequest, RequestOptions.DEFAULT)
+          .isAcknowledged();
+    } catch (final IOException e) {
+      throw new ElasticsearchExporterException("Failed to put index template", e);
+    }
+  }
+
+  private boolean indexExists(String aliasName) {
+    try {
+      return client.indices().existsAlias(new GetAliasesRequest(aliasName), RequestOptions.DEFAULT);
+    } catch (IOException e) {
+      log.warn("Failed to determine if alias {} exists", aliasName);
+      return false;
     }
   }
 
@@ -239,5 +289,9 @@ public class ElasticsearchClient {
 
   private static String indexTemplateForValueType(final ValueType valueType) {
     return String.format(INDEX_TEMPLATE_FILENAME_PATTERN, valueTypeToString(valueType));
+  }
+
+  private static String indexMappingPatchForValueType(final ValueType valueType) {
+    return String.format(INDEX_PATCH_FILENAME_PATTERN, valueTypeToString(valueType));
   }
 }
