@@ -27,7 +27,10 @@ public class TestConfigurationFactoryTest {
     // when
     final SampleConfiguration actual =
         sutConfigurationFactory.create(
-            null, "config", "TestConfigurationFactoryTestSample.yaml", SampleConfiguration.class);
+            null,
+            "config-test",
+            "TestConfigurationFactoryTestSample.yaml",
+            SampleConfiguration.class);
 
     // then
     assertThat(actual.getSetting()).isEqualTo("test");
@@ -56,14 +59,14 @@ public class TestConfigurationFactoryTest {
           IllegalAccessException {
     // given
     final Map<String, String> environmentEntries = new HashMap<>();
-    environmentEntries.put("config.args.foo", "not bar");
+    environmentEntries.put("config-test.args.foo", "not bar");
     final Environment environment = new Environment(environmentEntries);
 
     // when
     final SampleConfiguration actual =
         sutConfigurationFactory.create(
             environment,
-            "config",
+            "config-test",
             "TestConfigurationFactoryTestSample.yaml",
             SampleConfiguration.class);
 
@@ -78,14 +81,14 @@ public class TestConfigurationFactoryTest {
           IllegalAccessException {
     // given
     final Map<String, String> environmentEntries = new HashMap<>();
-    environmentEntries.put("CONFIG_ARGS_FOO", "not bar");
+    environmentEntries.put("CONFIG_TEST_ARGS_FOO", "not bar");
     final Environment environment = new Environment(environmentEntries);
 
     // when
     final SampleConfiguration actual =
         sutConfigurationFactory.create(
             environment,
-            "config",
+            "config-test",
             "TestConfigurationFactoryTestSample.yaml",
             SampleConfiguration.class);
 

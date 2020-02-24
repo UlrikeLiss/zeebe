@@ -38,71 +38,71 @@
 # zeebe-gateway:
   # network:
     # Sets the host the gateway binds to
-    # This setting can also be overridden using the environment variable ZEEBEGATEWAY_NETWORK_HOST.
+    # This setting can also be overridden using the environment variable ZEEBE_GATEWAY_NETWORK_HOST.
     # host: 0.0.0.0
     #
     # Sets the port the gateway binds to
-    # This setting can also be overridden using the environment variable ZEEBEGATEWAY_NETWORK_PORT.
+    # This setting can also be overridden using the environment variable ZEEBE_GATEWAY_NETWORK_PORT.
     # port: 26500
     #
     # Sets the minimum keep alive interval
     # This setting specifies the minimum accepted interval between keep alive pings. This value must
     # be specified as a positive integer followed by 's' for seconds, 'm' for minutes or 'h' for hours.
-    # This setting can also be overridden using the environment variable ZEEBEGATEWAY_NETWORK_KEEPALIVEINTERVAL.
+    # This setting can also be overridden using the environment variable ZEEBE_GATEWAY_NETWORK_MIN_KEEP_ALIVE_INTERVAL.
     # minKeepAliveInterval: 30s
 
   # cluster:
     # Sets the broker the gateway should initial contact
-    # This setting can also be overridden using the environment variable ZEEBEGATEWAY_CLUSTER_CONTACTPOINT.
+    # This setting can also be overridden using the environment variable ZEEBE_GATEWAY_CLUSTER_CONTACT_POINT.
     # contactPoint: 127.0.0.1:26502
 
     # Sets the timeout of requests send to the broker cluster
-    # This setting can also be overridden using the environment variable ZEEBEGATEWAY_CLUSTER_REQUEST_TIMEOUT.
+    # This setting can also be overridden using the environment variable ZEEBE_GATEWAY_CLUSTER_REQUEST_TIMEOUT.
     # requestTimeout: 15s
 
     # Sets name of the Zeebe cluster to connect to
-    # This setting can also be overridden using the environment variable ZEEBEGATEWAY_CLUSTER_CLUSTERNAME.
+    # This setting can also be overridden using the environment variable ZEEBE_GATEWAY_CLUSTER_CLUSTER_NAME.
     # clusterName: zeebe-cluster
 
     # Sets the member id of the gateway in the cluster
-    # This setting can also be overridden using the environment variable ZEEBEGATEWAY_CLUSTER_MEMBERID.
+    # This setting can also be overridden using the environment variable ZEEBE_GATEWAY_CLUSTER_MEMBER_ID.
     # memberId: gateway
 
     # Sets the host the gateway node binds to for internal cluster communication
-    # This setting can also be overridden using the environment variable ZEEBEGATEWAY_CLUSTER_HOST.
+    # This setting can also be overridden using the environment variable ZEEBE_GATEWAY_CLUSTER_HOST.
     # host: 0.0.0.0
 
     # Sets the port the gateway node binds to for internal cluster communication
-    # This setting can also be overridden using the environment variable ZEEBEGATEWAY_CLUSTER_PORT.
+    # This setting can also be overridden using the environment variable ZEEBE_GATEWAY_CLUSTER_PORT.
     # port: 26502
 
   # threads:
     # Sets the number of threads the gateway will use to communicate with the broker cluster
-    # This setting can also be overridden using the environment variable ZEEBEGATEWAY_THREADS_MANAGEMENTTHREADS.
+    # This setting can also be overridden using the environment variable ZEEBE_GATEWAY_THREADS_MANAGEMENT_THREADS.
     # managementThreads: 1
 
   # monitoring:
     # Enables the metrics collection and exporting it over HTTP
-    # This setting can also be overridden using the environment variable ZEEBEGATEWAY_MONITORING_ENABLED.
+    # This setting can also be overridden using the environment variable ZEEBE_GATEWAY_MONITORING_ENABLED.
     # enabled: false
 
     # Sets the host the monitoring binds to
-    # This setting can also be overridden using the environment variable ZEEBEGATEWAY_MONITORING_HOST.
+    # This setting can also be overridden using the environment variable ZEEBE_GATEWAY_MONITORING_HOST.
     # host: 0.0.0.0
 
     # Sets the port the monitoring binds to
-    # This setting can also be overridden using the environment variable ZEEBEGATEWAY_MONITOIRNG_PORT..
+    # This setting can also be overridden using the environment variable ZEEBE_GATEWAY_MONITOIRNG_PORT..
     # port: 9600
 
   # security:
     # Enables TLS authentication between clients and the gateway
-    # This setting can also be overridden using the environment variable ZEEBEGATEWAY_SECURITY_ENABLED.
+    # This setting can also be overridden using the environment variable ZEEBE_GATEWAY_SECURITY_ENABLED.
     # enabled: false
 
     # Sets the path to the certificate chain file
-    # This setting can also be overridden using the environment variable ZEEBEGATEWAY_SECURITY_CERTIFICATECHAIN_PATH.
+    # This setting can also be overridden using the environment variable ZEEBE_GATEWAY_SECURITY_CERTIFICATE_CHAIN_PATH.
     # certificateChainPath:
 
     # Sets the path to the private key file location
-    # This setting can also be overridden using the environment variable ZEEBEGATEWAY_SECURITY_PRIVATEKEYPATH.
+    # This setting can also be overridden using the environment variable ZEEBE_GATEWAY_SECURITY_PRIVATE_KEY_PATH.
     # privateKeyPath:

@@ -8,9 +8,6 @@
 package io.zeebe.gateway.impl.configuration;
 
 import static io.zeebe.gateway.impl.configuration.ConfigurationDefaults.DEFAULT_PORT;
-import static io.zeebe.gateway.impl.configuration.EnvironmentConstants.ENV_GATEWAY_HOST;
-import static io.zeebe.gateway.impl.configuration.EnvironmentConstants.ENV_GATEWAY_KEEP_ALIVE_INTERVAL;
-import static io.zeebe.gateway.impl.configuration.EnvironmentConstants.ENV_GATEWAY_PORT;
 
 import io.zeebe.transport.impl.SocketAddress;
 import io.zeebe.util.Environment;
@@ -24,12 +21,6 @@ public final class NetworkCfg {
   private Duration minKeepAliveInterval = Duration.ofSeconds(30);
 
   public void init(final Environment environment, final String defaultHost) {
-    environment.get(ENV_GATEWAY_HOST).ifPresent(this::setHost);
-    environment.getInt(ENV_GATEWAY_PORT).ifPresent(this::setPort);
-    environment
-        .get(ENV_GATEWAY_KEEP_ALIVE_INTERVAL)
-        .ifPresent(value -> setMinKeepAliveInterval(Duration.parse(value)));
-
     if (host == null) {
       host = defaultHost;
     }
