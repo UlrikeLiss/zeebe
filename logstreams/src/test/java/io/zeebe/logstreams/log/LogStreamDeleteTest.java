@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.zeebe.logstreams.util.LogStreamRule;
 import io.zeebe.logstreams.util.SynchronousLogStream;
 import io.zeebe.util.buffer.BufferUtil;
-import java.io.IOException;
+import java.util.ArrayList;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.junit.Before;
@@ -24,10 +24,7 @@ import org.junit.rules.TemporaryFolder;
 
 public final class LogStreamDeleteTest {
 
-  private long firstPosition;
-  private long secondPosition;
-  private long thirdPosition;
-  private long fourthPosition;
+  private static final int EVENT_COUNT = 100;
 
   private final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -35,9 +32,10 @@ public final class LogStreamDeleteTest {
       LogStreamRule.createRuleWithoutStarting(temporaryFolder);
 
   @Rule public RuleChain ruleChain = RuleChain.outerRule(temporaryFolder).around(logStreamRule);
+  private ArrayList<Long> positions;
 
   @Before
-  public void setUp() throws IOException {
+  public void setUp() {
     final int segmentSize = 1024;
     final int entrySize = Math.floorDiv(segmentSize, 2) + 1;
 
@@ -47,14 +45,11 @@ public final class LogStreamDeleteTest {
 
     // remove some bytes for padding per entry
     final byte[] largeEvent = new byte[entrySize - 90];
-    // written from segment 0 4096 -> 8192
-    firstPosition = writeEvent(logStream, BufferUtil.wrapArray(largeEvent));
-    // written from segment 1 4096 -> 8192
-    secondPosition = writeEvent(logStream, BufferUtil.wrapArray(largeEvent));
-    // written from segment 2 4096 -> 8192
-    thirdPosition = writeEvent(logStream, BufferUtil.wrapArray(largeEvent));
-    // written from segment 3 4096 -> 8192
-    fourthPosition = writeEvent(logStream, BufferUtil.wrapArray(largeEvent));
+
+    positions = new ArrayList<>();
+    for (int i = 0; i < EVENT_COUNT; i++) {
+      positions.add(writeEvent(logStream, BufferUtil.wrapArray(largeEvent)));
+    }
   }
 
   @Test
@@ -63,16 +58,11 @@ public final class LogStreamDeleteTest {
     final SynchronousLogStream logStream = logStreamRule.getLogStream();
 
     // when
-    logStream.delete(fourthPosition);
+    logStream.delete(positions.get(EVENT_COUNT / 2));
 
     // then
-    assertThat(events().count()).isEqualTo(1);
-
-    assertThat(events().anyMatch(e -> e.getPosition() == firstPosition)).isFalse();
-    assertThat(events().anyMatch(e -> e.getPosition() == secondPosition)).isFalse();
-    assertThat(events().anyMatch(e -> e.getPosition() == thirdPosition)).isFalse();
-
-    assertThat(events().findFirst().get().getPosition()).isEqualTo(fourthPosition);
+    assertThat(events().count()).isLessThan(EVENT_COUNT);
+    assertThat(events().anyMatch(e -> e.getPosition() == EVENT_COUNT / 2)).isTrue();
   }
 
   @Test
@@ -83,13 +73,8 @@ public final class LogStreamDeleteTest {
     // when
     logStream.delete(-1);
 
-    // then - segment 0 and 1 are removed
-    assertThat(events().count()).isEqualTo(4);
-
-    assertThat(events().filter(e -> e.getPosition() == firstPosition).findAny()).isNotEmpty();
-    assertThat(events().filter(e -> e.getPosition() == secondPosition).findAny()).isNotEmpty();
-    assertThat(events().filter(e -> e.getPosition() == thirdPosition).findAny()).isNotEmpty();
-    assertThat(events().filter(e -> e.getPosition() == fourthPosition).findAny()).isNotEmpty();
+    // then
+    assertThat(events().count()).isEqualTo(EVENT_COUNT);
   }
 
   private Stream<LoggedEvent> events() {

@@ -203,7 +203,7 @@ public final class Broker implements AutoCloseable {
         .map(RaftPartition.class::cast)
         .forEach(
             raftPartition -> {
-              final var zeebeIndex = new ZeebeIndexBridge();
+              final var zeebeIndex = ZeebeIndexBridge.ofDefaultDensity();
               partitionIndexes.put(raftPartition.id().id(), zeebeIndex);
               raftPartition.setJournalIndexFactory(() -> zeebeIndex);
             });

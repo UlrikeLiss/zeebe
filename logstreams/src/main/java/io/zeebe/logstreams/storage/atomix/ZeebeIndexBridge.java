@@ -11,33 +11,60 @@ import io.atomix.protocols.raft.zeebe.ZeebeEntry;
 import io.atomix.storage.journal.Indexed;
 import io.atomix.storage.journal.index.JournalIndex;
 import io.atomix.storage.journal.index.Position;
-import java.util.Map;
+import io.atomix.storage.journal.index.SparseJournalIndex;
+import io.zeebe.logstreams.impl.Loggers;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+import org.slf4j.Logger;
 
 public final class ZeebeIndexBridge implements JournalIndex, ZeebeIndexMapping {
 
-  private static final int DENSITY = 100;
+  public static final Logger LOG = Loggers.LOGSTREAMS_LOGGER;
+  private static final int DEFAULT_DENSITY = 50;
 
   private final ConcurrentNavigableMap<Long, Long> positionIndexMapping =
       new ConcurrentSkipListMap<>();
   private final ConcurrentNavigableMap<Long, Long> indexPositionMapping =
       new ConcurrentSkipListMap<>();
   // atomix positions
-  private final ConcurrentNavigableMap<Long, Integer> positions = new ConcurrentSkipListMap<>();
+  private final int density;
+  private final SparseJournalIndex sparseJournalIndex;
+
+  private ZeebeIndexBridge(int density) {
+    this.density = density;
+
+    // sparse journal accepts only floating density - we should change that
+    // internally it calculates the density
+    // this.x = (int) Math.ceil(MIN_DENSITY / (y * MIN_DENSITY));
+    // if we want to be x = ourDensity, then y needs to be 1 / ourDensity
+    sparseJournalIndex = new SparseJournalIndex(1f / density);
+  }
+
+  public static ZeebeIndexBridge ofDensity(int density) {
+    return new ZeebeIndexBridge(density);
+  }
+
+  public static ZeebeIndexBridge ofDefaultDensity() {
+    return new ZeebeIndexBridge(DEFAULT_DENSITY);
+  }
 
   @Override
   public void index(final Indexed indexedEntry, final int position) {
     final var index = indexedEntry.index();
-    if (index % DENSITY == 0) {
+    if (index % density == 0) {
+      LOG.error("Add index {}", index);
       if (indexedEntry.type() == ZeebeEntry.class) {
         final ZeebeEntry zeebeEntry = (ZeebeEntry) indexedEntry.entry();
         final var lowestPosition = zeebeEntry.lowestPosition();
+        LOG.error("Add index {} for zeebe entry with low pos {}", index, lowestPosition);
         positionIndexMapping.put(lowestPosition, index);
         indexPositionMapping.put(index, lowestPosition);
       }
-      positions.put(index, position);
+    } else {
+      LOG.debug("INDEX {} does not reach density {}", index, DEFAULT_DENSITY);
     }
+
+    sparseJournalIndex.index(indexedEntry, position);
   }
 
   @Override
@@ -62,34 +89,45 @@ public final class ZeebeIndexBridge implements JournalIndex, ZeebeIndexMapping {
 
   @Override
   public Position lookup(final long index) {
-    final Map.Entry<Long, Integer> entry = positions.floorEntry(index);
-    return entry != null ? new Position(entry.getKey(), entry.getValue()) : null;
+    return sparseJournalIndex.lookup(index);
   }
 
   @Override
   public void truncate(final long index) {
+    //    LOG.error(
+    //        "Truncate index for given idx {}, map {}", index, indexPositionMapping, new
+    // Exception());
     final var lowerEntry = indexPositionMapping.lowerEntry(index);
 
-    final var lowerIndex = lowerEntry.getKey();
-    final var lowerPosition = lowerEntry.getValue();
+    if (lowerEntry != null) {
 
-    indexPositionMapping.tailMap(lowerIndex).clear();
-    positionIndexMapping.tailMap(lowerPosition).clear();
+      final var lowerIndex = lowerEntry.getKey();
+      final var lowerPosition = lowerEntry.getValue();
 
-    // clean up map
-    //
-    //      final var positionToIndexMapping = getPositionToIndexMapping();
-    //      if (!positionToIndexMapping.isEmpty()) {
-    //        final var newPositionToIndexMap =
-    //            positionToIndexMapping.subMap(
-    //                positionToIndexMapping.higherKey(position),
-    //                true,
-    //                positionToIndexMapping.lastKey(),
-    //                true);
-    //        positionToIndexMappingRef.set(newPositionToIndexMap);
-    //      }
+      indexPositionMapping.tailMap(lowerIndex).clear();
+      positionIndexMapping.tailMap(lowerPosition).clear();
+    }
 
-    //    sparseJournalIndex.truncate(index);
-    positions.tailMap(index, false).clear();
+    sparseJournalIndex.truncate(index);
+  }
+
+  @Override
+  public void compact(long index) {
+
+    //    LOG.error(
+    //        "Compact index for given idx {}, map {}", index, indexPositionMapping, new
+    // Exception());
+    final var lowerEntry = indexPositionMapping.lowerEntry(index);
+
+    if (lowerEntry != null) {
+
+      final var lowerIndex = lowerEntry.getKey();
+      final var lowerPosition = lowerEntry.getValue();
+
+      indexPositionMapping.headMap(lowerIndex).clear();
+      positionIndexMapping.headMap(lowerPosition).clear();
+    }
+
+    sparseJournalIndex.compact(index);
   }
 }

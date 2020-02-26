@@ -146,7 +146,7 @@ public final class AtomixLogStorageRule extends ExternalResource
       throw new UncheckedIOException(e);
     }
 
-    final var zeebeIndexBridge = new ZeebeIndexBridge();
+    final var zeebeIndexBridge = ZeebeIndexBridge.ofDefaultDensity();
     raftStorage =
         builder
             .apply(buildDefaultStorage())

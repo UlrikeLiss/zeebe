@@ -165,26 +165,23 @@ public final class LogStreamImpl extends Actor implements LogStream, AutoCloseab
     actor.call(
         () -> {
           final long startTime = System.currentTimeMillis();
-          final boolean positionNotExist = !reader.seek(position);
-          final long endTime = System.currentTimeMillis();
-          LOG.info("Seek to position {} took {} ms", position, endTime - startTime);
-          if (positionNotExist) {
-            LOG.debug(
-                "Tried to delete from log stream, but found no corresponding address for the given position {}.",
-                position);
-            return;
-          }
-
-          final long blockAddress = reader.lastReadAddress();
+          final long address = reader.lookupAddress(position);
           LOG.debug(
-              "Delete data from log stream until position '{}' (address: '{}').",
+              "Lookup address {} for position {}. Will delete log until address {}.",
+              address,
               position,
-              blockAddress);
+              address);
+          final long endTime = System.currentTimeMillis();
+          LOG.info(
+              "Look up address {} for position {} took {} ms",
+              address,
+              position,
+              endTime - startTime);
 
           final long startDelete = System.currentTimeMillis();
-          logStorage.delete(blockAddress);
+          logStorage.delete(address);
           final long endDelete = System.currentTimeMillis();
-          LOG.info("Deletion up to {} took {} ms", blockAddress, endDelete - startDelete);
+          LOG.info("Deletion up to {} took {} ms", address, endDelete - startDelete);
         });
   }
 
